@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32407.343
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChangeScreenshotPath", "ChangeScreenshotPath\ChangeScreenshotPath.csproj", "{F7BF454F-D77E-496A-B9D2-E13236031947}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F7BF454F-D77E-496A-B9D2-E13236031947}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7BF454F-D77E-496A-B9D2-E13236031947}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7BF454F-D77E-496A-B9D2-E13236031947}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7BF454F-D77E-496A-B9D2-E13236031947}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C2448E92-174D-4E06-9444-18FC39E17F2F}
+	EndGlobalSection
+EndGlobal
