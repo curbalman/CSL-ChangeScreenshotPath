@@ -16,6 +16,7 @@ namespace ChangeScreenshotPath
         public void OnEnabled()
         {
             HarmonyHelper.DoOnHarmonyReady(() => Patcher.PatchAll());
+            RenderItCompatibility.Initialize();
         }
 
         public void OnDisabled()
@@ -36,6 +37,8 @@ namespace ChangeScreenshotPath
 
         private UIDropDown hiresScreenshotSupersize;
         private UIDropDown fileNaming;
+        private UICheckBox useLocationStamp;
+        private UICheckBox disableAutoOffAAFeature;
 
         public void OnSettingsUI(UIHelperBase helper)
         {
@@ -169,21 +172,19 @@ namespace ChangeScreenshotPath
 
             fileNaming = (UIDropDown)group.AddDropdown("File Naming", Enum.GetNames(typeof(OnGUIPatch.ScreenshotNaming)), (int)OnGUIPatch.screenshotNaming, value =>
             {
-                switch ((OnGUIPatch.ScreenshotNaming)value)
-                {
-                    case OnGUIPatch.ScreenshotNaming.Sequential:
-                        OnGUIPatch.fileName = "Screenshot.png";
-                        OnGUIPatch.fileNameHires = "HiresScreenshot.png";
-                        break;
-                    case OnGUIPatch.ScreenshotNaming.DateTime:
-                        OnGUIPatch.fileName = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".png";
-                        OnGUIPatch.fileNameHires = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".png";
-                        break;
-                    default:
-                        goto case OnGUIPatch.ScreenshotNaming.Sequential;
-                }
-
                 OnGUIPatch.screenshotNaming = (OnGUIPatch.ScreenshotNaming)value;
+                ModSettings.Save();
+            });
+
+            useLocationStamp = (UICheckBox)group.AddCheckbox("Use location stamp", OnGUIPatch.useLocationStamp, sel =>
+            {
+                OnGUIPatch.useLocationStamp = sel;
+                ModSettings.Save();
+            });
+            
+            disableAutoOffAAFeature = (UICheckBox)group.AddCheckbox("Disable the feature that automatically turns off anti-aliasing while taking high-resolution screenshot", OnGUIPatch.disableAutoOffAAFeature, sel =>
+            {
+                OnGUIPatch.disableAutoOffAAFeature = sel;
                 ModSettings.Save();
             });
 

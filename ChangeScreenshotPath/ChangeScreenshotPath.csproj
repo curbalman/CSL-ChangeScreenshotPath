@@ -63,6 +63,7 @@
     <Compile Include="Patcher.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RenderItCompatibility.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

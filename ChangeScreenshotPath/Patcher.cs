@@ -4,6 +4,7 @@ using System.Reflection;
 using HarmonyLib;
 using ColossalFramework;
 using ColossalFramework.IO;
+using ColossalFramework.UI;
 using UnityEngine;
 
 namespace ChangeScreenshotPath
@@ -115,8 +116,9 @@ namespace ChangeScreenshotPath
         internal static int superSize = HiresScreenshotSuperSizeValues[(int)hiresScreenshotSuperSize];
 
         internal static ScreenshotNaming screenshotNaming = ScreenshotNaming.Sequential;
-        internal static string fileName = "Screenshot.png";
-        internal static string fileNameHires = "HiresScreenshot.png";
+        internal static bool useLocationStamp = true;
+
+        internal static bool disableAutoOffAAFeature = false;
 
         private static MainMenu mainMenu = UnityEngine.Object.FindObjectOfType<MainMenu>();
 
@@ -124,37 +126,130 @@ namespace ChangeScreenshotPath
         private static SavedInputKey m_Screenshot = (SavedInputKey)typeof(MainMenu).GetField("m_Screenshot", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(mainMenu);
         private static SavedInputKey m_HiresScreenshot = (SavedInputKey)typeof(MainMenu).GetField("m_HiresScreenshot", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(mainMenu);
 
-        private static bool captureNextFrame = false; 
+        private static bool captureHiresInNextFrame = false;
+        private static bool captureHiresInNextFrameForRenderIt = false;
+        private static bool restoreRenderItAntialiasing = false;
+        private static int restoreRenderItAntialiasingTimer;
+        
+        private static int renderItAntialiasingTechniqueNumber;
+
         public static bool Prefix()
         {
+            // Screenshot
             if (m_Screenshot.IsPressed(Event.current))
             {
-                Application.CaptureScreenshot(PathUtils.MakeUniquePath(Path.Combine(screenShotPath(), fileName)), 1);
+                Application.CaptureScreenshot(PathUtils.MakeUniquePath(Path.Combine(screenShotPath(), FileName(isHires: false))), 1);
             }
-            else if (m_HiresScreenshot.IsPressed(Event.current) || captureNextFrame)
+            // HiresScreenshot
+            else if (m_HiresScreenshot.IsPressed(Event.current))
             {
-                // If anti-aliasing is on, turn it off and capture in next frame.
-                if (CheckAntiAliasing())
+                Debug.LogWarning("01");
+                
+                // Just capture if disabled the auto off AA feature.
+                if (disableAutoOffAAFeature)
                 {
-                    captureNextFrame = true;
+                    CaptureHiresScreenshot();
                     return false;
+                }
+                
+                // Check Render It.
+                if (RenderItCompatibility.IsRenderItExist && RenderItCompatibility.IsRenderItEnabled)
+                {
+                    // If anti-aliasing is on, turn it off and schedule capture in next frame.
+                    if (CheckRenderItAntialiasing())
+                    {
+                        captureHiresInNextFrameForRenderIt = true;
+                    }
+                    else
+                    {
+                        // No anti-aliasing enabled. capture now.
+                        CaptureHiresScreenshot();
+                    }
+                }
+                // If anti-aliasing is on, turn it off and schedule capture in next frame.
+                else if (CheckAntialiasing())
+                {
+                    captureHiresInNextFrame = true;
                 }
                 else
                 {
-                    Application.CaptureScreenshot(PathUtils.MakeUniquePath(Path.Combine(useDifferentPathForHiresScreenshot ? hiresScreenshotPath : ScreenshotPathPatch.screenshotPath, fileNameHires)), superSize);
-                    if (captureNextFrame)
-                    {
-                        // Restore anti-aliasing.
-                        GameObject.Find("AntiAliasing").GetComponent<ColossalFramework.UI.UIDropDown>().selectedIndex = 1;
-                        captureNextFrame = false;
-                    }
+                    // No anti-aliasing enabled. capture now.
+                    CaptureHiresScreenshot();
                 }
             }
+            else if (captureHiresInNextFrame)
+            {
+                captureHiresInNextFrame = false;
 
+                // Capture hires screenshot while disabled anti-aliasing.
+                CaptureHiresScreenshot();
+                
+                // Restore vanilla anti-aliasing.
+                GameObject.Find("AntiAliasing").GetComponent<UIDropDown>().selectedIndex = 1;
+            }
+            else if (captureHiresInNextFrameForRenderIt)
+            {
+                captureHiresInNextFrameForRenderIt = false;
+                Debug.LogWarning("13 -");
+                
+                // Capture hires screenshot while disabled anti-aliasing.
+                CaptureHiresScreenshot();
+                
+                Debug.LogWarning(RenderItCompatibility.RenderItAAOption == null);
+                Debug.LogWarning(RenderItCompatibility.RenderItUpdateAntialiasingMethod == null);
+
+                restoreRenderItAntialiasing = true;
+            }
+            else if (restoreRenderItAntialiasing)
+            {
+                // Wait with antialiasing turned off (otherwise it won't take with it turned off).
+                restoreRenderItAntialiasingTimer++;
+                if (restoreRenderItAntialiasingTimer > 100)
+                {
+                    restoreRenderItAntialiasingTimer = 0;
+                    restoreRenderItAntialiasing = false;
+                
+                    // Restore Render It anti-aliasing.
+                    RenderItCompatibility.RenderItAAOption.GetSetMethod()
+                        .Invoke(RenderItCompatibility.ValueOfActiveProfile, new object[] { renderItAntialiasingTechniqueNumber });
+                    RenderItCompatibility.RenderItUpdateAntialiasingMethod.Invoke(RenderItCompatibility.RenderItModManager, null);
+                }
+            }
+            
             return false; // Skip the original method.
         }
 
 
+        private static string FileName(bool isHires)
+        {
+                string fileName = screenshotNaming switch
+                {
+                    ScreenshotNaming.Sequential => isHires ? "HiresScreenshot" : "Screenshot",
+                    ScreenshotNaming.DateTime => DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+                if (useLocationStamp)
+                {
+                    if (Singleton<SimulationManager>.instance.m_metaData != null)
+                    {
+                        fileName += $" [{Singleton<SimulationManager>.instance.m_metaData.m_CityName}]";
+                    }
+
+                    if (Controller != null)
+                    {
+                        Vector3 pos = Controller.m_currentPosition;
+                        Vector3 angle = Controller.m_currentAngle;
+                        fileName += $"[{pos.x}, {pos.y}, {pos.z}, {angle.x}, {angle.y}]";
+                    }              
+                }
+                fileName += ".png";
+
+                return fileName;
+        }
+
+        private static CameraController Controller => controller ??= UnityEngine.Object.FindObjectOfType<CameraController>();
+        private static CameraController controller;
+        
         /// <summary>
         /// Get screenShotPath that currently exists.
         /// </summary>
@@ -175,17 +270,77 @@ namespace ChangeScreenshotPath
             return null;
         }
 
-        private static bool CheckAntiAliasing()
+
+        private static void CaptureHiresScreenshot() => Application.CaptureScreenshot(
+            PathUtils.MakeUniquePath(Path.Combine(
+                useDifferentPathForHiresScreenshot ? hiresScreenshotPath : ScreenshotPathPatch.screenshotPath,
+                FileName(isHires: true))), superSize);
+
+        private static bool CheckAntialiasing()
         {
-            if (GameObject.Find("AntiAliasing").GetComponent<ColossalFramework.UI.UIDropDown>().selectedIndex == 1)
+            UIDropDown antialiasingDropdown = GameObject.Find("AntiAliasing").GetComponent<UIDropDown>();
+            
+            if (antialiasingDropdown.selectedIndex == 1)
             {
-                GameObject.Find("AntiAliasing").GetComponent<ColossalFramework.UI.UIDropDown>().selectedIndex = 0;
+                antialiasingDropdown.selectedIndex = 0;
                 return true;
             }
-            else
+            
+            return false;
+        }
+
+        private static bool CheckRenderItAntialiasing()
+        {
+            Type typeOfProfileManager = RenderItCompatibility.RenderItAssembly.GetType("RenderIt.Managers.ProfileManager");
+            Type typeOfProfile = RenderItCompatibility.RenderItAssembly.GetType("RenderIt.Profile");
+
+            // Type: RenderIt.Managers.ProfileManager
+            // Name: RenderIt.Managers.ProfileManager.Instance_get
+            MethodInfo methodOfInstanceGet = typeOfProfileManager
+                .GetProperty("Instance", BindingFlags.Public | BindingFlags.Static)
+                ?.GetGetMethod();
+            // ProfileManager.Instance..
+            var valueOfInstance = methodOfInstanceGet?.Invoke(null, null);
+            
+            // Type: RenderIt.Profile
+            // Name: RenderIt.Managers.ProfileManager.ActiveProfile
+            PropertyInfo propertyOfActiveProfile = typeOfProfileManager.GetProperty("ActiveProfile", BindingFlags.Public | BindingFlags.Instance);
+            // ProfileManager.Instance.ActiveProfile..
+            RenderItCompatibility.ValueOfActiveProfile = propertyOfActiveProfile?.GetGetMethod()
+                .Invoke(valueOfInstance, null);
+
+            // Type: int
+            // Name: RenderIt.Profile.AntialiasingTechnique
+            RenderItCompatibility.RenderItAAOption = typeOfProfile.GetProperty("AntialiasingTechnique", BindingFlags.Public | BindingFlags.Instance);
+            // ProfileManager.Instance.ActiveProfile.AntialiasingTechnique..
+            var valueOfAntialiasingTechnique = RenderItCompatibility.RenderItAAOption?.GetGetMethod()
+                .Invoke(RenderItCompatibility.ValueOfActiveProfile, null);
+
+            if (valueOfAntialiasingTechnique is int antialiasingNumber)
             {
-                return false;
+                renderItAntialiasingTechniqueNumber = antialiasingNumber;
+                
+                // If anti-aliasing is on, turn it off and capture in next frame.
+                if (antialiasingNumber is 1 /* Default */ or 2 /* FXAA */ or 3 /* TAA */)
+                {
+                    RenderItCompatibility.RenderItAAOption.GetSetMethod()
+                        .Invoke(RenderItCompatibility.ValueOfActiveProfile, new object[] { 0 /* None */ });
+                    
+                    Type typeOfModManager = RenderItCompatibility.RenderItAssembly.GetType("RenderIt.ModManager");
+                    RenderItCompatibility.RenderItModManager = UnityEngine.Object.FindObjectOfType(typeOfModManager);
+                    
+                    // It seems(and considered) not in-game.
+                    if (RenderItCompatibility.RenderItModManager == null) return false;
+
+                    RenderItCompatibility.RenderItUpdateAntialiasingMethod ??= typeOfModManager.GetMethod("UpdateAntialiasing", BindingFlags.NonPublic | BindingFlags.Instance);
+                    RenderItCompatibility.RenderItUpdateAntialiasingMethod?
+                        .Invoke(RenderItCompatibility.RenderItModManager, null);
+
+                    return true;
+                }
             }
+
+            return false;
         }
     }
 }

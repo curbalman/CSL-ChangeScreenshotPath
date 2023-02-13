@@ -35,6 +35,12 @@ namespace ChangeScreenshotPath
 
         [XmlElement("ScreenshotNaming")]
         public OnGUIPatch.ScreenshotNaming ScreenshotNaming { get => OnGUIPatch.screenshotNaming; set => OnGUIPatch.screenshotNaming = value; }
+        
+        [XmlElement("UseLocationStamp")]
+        public bool UseLocationStamp { get => OnGUIPatch.useLocationStamp; set => OnGUIPatch.useLocationStamp = value; }
+        
+        [XmlElement("DisableAutoOffAAFeature")]
+        public bool DisableAutoOffAAFeature { get => OnGUIPatch.disableAutoOffAAFeature; set => OnGUIPatch.disableAutoOffAAFeature = value; }
 
         internal static void Load()
         {
