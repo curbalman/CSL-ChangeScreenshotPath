@@ -7,7 +7,7 @@ using UnityEngine;
 using Debug = UnityEngine.Debug;
 
 
-namespace BenCSCommons.Cities1
+namespace ChangeScreenshotPath.Utils
 {
 #if !DEBUG
     #if TRACE
@@ -43,7 +43,7 @@ namespace BenCSCommons.Cities1
     public static class BLog 
     {
         private static readonly object _logLock = new object();
-        private static readonly string _logFileName = UserModBase.BaseName + ".log";
+        private static readonly string _logFileName = "ChangeScreenshotPath.log";
         private static readonly string _logFilePath;
         private static Stopwatch _sw = Stopwatch.StartNew();
 

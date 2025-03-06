@@ -6,6 +6,7 @@ using ColossalFramework;
 using ColossalFramework.IO;
 using ColossalFramework.UI;
 using UnityEngine;
+using ChangeScreenshotPath.Utils;
 
 namespace ChangeScreenshotPath
 {
@@ -132,13 +133,18 @@ namespace ChangeScreenshotPath
         private static int restoreRenderItAntialiasingTimer;
         
         private static int renderItAntialiasingTechniqueNumber;
+        internal static bool iSCaptureRequestedFromAPI = false;
 
         public static bool Prefix()
         {
             // Screenshot
-            if (m_Screenshot.IsPressed(Event.current))
+            if (m_Screenshot.IsPressed(Event.current) || iSCaptureRequestedFromAPI)
             {
-                Application.CaptureScreenshot(PathUtils.MakeUniquePath(Path.Combine(screenShotPath(), FileName(isHires: false))), 1);
+                BLog.Debug($"Start capturing screenshot, iSCaptureRequestedFromAPI = {iSCaptureRequestedFromAPI}");
+                string fileName = FileName(isHires: false);
+                Application.CaptureScreenshot(PathUtils.MakeUniquePath(Path.Combine(screenShotPath(), fileName)), 1);
+                iSCaptureRequestedFromAPI = false;
+                BLog.Info($"Captured screenshot: {fileName}");
             }
             // HiresScreenshot
             else if (m_HiresScreenshot.IsPressed(Event.current))
