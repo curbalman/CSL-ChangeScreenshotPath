@@ -4,6 +4,8 @@ using ICities;
 using UnityEngine;
 using ColossalFramework;
 using ColossalFramework.UI;
+using System.Runtime.Remoting.Lifetime;
+using ChangeScreenshotPath.API;
 
 namespace ChangeScreenshotPath
 {
@@ -17,10 +19,12 @@ namespace ChangeScreenshotPath
         {
             HarmonyHelper.DoOnHarmonyReady(() => Patcher.PatchAll());
             RenderItCompatibility.Initialize();
+            Singleton<ScreenshotWrapper>.Ensure();
         }
 
         public void OnDisabled()
-        { 
+        {
+            Singleton<ScreenshotWrapper>.instance.Release();
             if (HarmonyHelper.IsHarmonyInstalled) Patcher.UnpatchAll();
         }
 

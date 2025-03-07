@@ -62,7 +62,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="API\ChangeScreenshotPathAPI.cs" />
+    <Compile Include="API\IScreenshotClient.cs" />
+    <Compile Include="API\IScreenshotManager.cs" />
+    <Compile Include="API\ScreenshotWrapper.cs" />
     <Compile Include="Utils\BLog.cs" />
     <Compile Include="ModSettings.cs" />
     <Compile Include="Patcher.cs" />

@@ -135,23 +135,18 @@ namespace ChangeScreenshotPath
         
         private static int renderItAntialiasingTechniqueNumber;
         // API stuff
-        internal static bool iSCaptureRequestedFromAPI = false;
-        internal  delegate void ScreenshotEventHandler(ScreenshotEventArgs status);
-        internal static event ScreenshotEventHandler AfterCaptureScreenshot;
-        internal static event ScreenshotEventHandler AfterCaptureHiresScreenshot;
+        internal static bool iSCaptureRequestedFromClient = false;
 
         public static bool Prefix()
         {
             // Screenshot
-            if (m_Screenshot.IsPressed(Event.current) || iSCaptureRequestedFromAPI)
+            if (m_Screenshot.IsPressed(Event.current) || iSCaptureRequestedFromClient)
             {
-                BLog.Debug($"Start capturing screenshot, iSCaptureRequestedFromAPI = {iSCaptureRequestedFromAPI}");
+                BLog.Debug($"Start capturing screenshot, iSCaptureRequestedFromAPI = {iSCaptureRequestedFromClient}");
                 string fileName = FileName(isHires: false);
                 Application.CaptureScreenshot(PathUtils.MakeUniquePath(Path.Combine(screenShotPath(), fileName)), 1);
-                iSCaptureRequestedFromAPI = false;
-                BLog.Assert(AfterCaptureScreenshot != null, "AfterCaptureScreenshot is null");
-                AfterCaptureScreenshot?.Invoke(new ScreenshotEventArgs(success:true, path:fileName));
-                BLog.Info($"Captured screenshot: {fileName}");
+                iSCaptureRequestedFromClient = false;
+                Singleton<ScreenshotWrapper>.instance.OnAfterCaptureScreenshotRelay(new ScreenshotEventArgs(success:true, path:fileName));
             }
             // HiresScreenshot
             else if (m_HiresScreenshot.IsPressed(Event.current))
