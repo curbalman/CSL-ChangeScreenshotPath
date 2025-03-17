@@ -1,38 +1,48 @@
 ﻿using System;
 using System.Collections.Generic;
 using ChangeScreenshotPath;
-using ChangeScreenshotPath.Utils;
 using ColossalFramework;
 using ColossalFramework.Plugins;
-using ColossalFramework.UI;
+using BenCSCommons.Cities1;
+using System.Configuration;
 
 namespace ChangeScreenshotPath.API
 {
-
-
     public class ScreenshotWrapper: Singleton<ScreenshotWrapper>, IScreenshotManager
     {
-        private List<IScreenshotClient> clients = new List<IScreenshotClient>();
+        private List<IScreenshotClient> clients = [];
+
         public void CaptureScreenshot()
         {
+            BLog.Rem("Capture screenshot requested");
             OnGUIPatch.iSCaptureRequestedFromClient = true;
         }
+
         public void CaptureHiresScreenshot()
         {
-            // TODO
+            BLog.Rem("Capture hires screenshot requested");
+            OnGUIPatch.isHiresRequestedFromClient = true;
         }
-        internal void OnAfterCaptureScreenshotRelay(ScreenshotEventArgs status)
+
+        internal void OnAfterScreenshotRelay(ScreenshotEventArgs status)
         {
+            BLog.Rem("OnAfterScreenshotRelay called", status);
+            Singleton<ScreenshotWrapper>.instance.getImplementations();
             foreach (var client in clients)
             {
                 client?.OnAfterCaptureScreenshot(status);
             }
         }
-        public ScreenshotWrapper()
+
+
+        internal void OnAfterHiresScreenshotRelay(ScreenshotEventArgs status)
         {
-            getImplementations();
-            Singleton<PluginManager>.instance.eventPluginsChanged += getImplementations;
-            Singleton<PluginManager>.instance.eventPluginsStateChanged += getImplementations;
+            BLog.Rem("OnAfterHiresScreenshotRelay called", status);
+            Singleton<ScreenshotWrapper>.instance.getImplementations();
+            foreach (var client in clients)
+            {
+                client?.OnAfterCaptureScreenshot(status);
+            }
         }
 
         private void getImplementations()
@@ -40,22 +50,35 @@ namespace ChangeScreenshotPath.API
             OnClientReleased();
             clients = Singleton<PluginManager>.instance.GetImplementations<IScreenshotClient>();
             OnClientCreated();
+            BLog.Rem();
+            foreach (IScreenshotClient client in clients)
+            {
+                BLog.Info($"Client type name: {client.GetType().FullName}");
+            }
         }
 
-        public void Release()
+        internal void Release()
         {
+            BLog.Rem();
             Singleton<PluginManager>.instance.eventPluginsChanged -= getImplementations;
             Singleton<PluginManager>.instance.eventPluginsStateChanged -= getImplementations;
             OnClientReleased();
         }
 
-        public void OnClientReleased()
+        public ScreenshotWrapper()
         {
+            Singleton<PluginManager>.instance.eventPluginsChanged += getImplementations;
+            Singleton<PluginManager>.instance.eventPluginsStateChanged += getImplementations;
+        }
+
+        private void OnClientReleased()
+        {
+            BLog.Rem();
             for (int i = 0; i < clients.Count; i++)
             {
                 try
                 {
-                    clients[i].OnReleased();
+                    clients[i]?.OnReleased();
                 }
                 catch (Exception ex)
                 {
@@ -63,22 +86,24 @@ namespace ChangeScreenshotPath.API
                     PluginManager.PluginInfo pluginInfo = Singleton<PluginManager>.instance.FindPluginInfo(type.Assembly);
                     if (pluginInfo != null)
                     {
-                        BLog.Error("The Mod " + pluginInfo.ToString() + " has caused an error", ex);
+                        BLog.Error("The Mod " + pluginInfo.ToString() + " has caused an error");
                     }
                     else
                     {
-                        BLog.Error("A Mod caused an error", ex);
+                        BLog.Error("A Mod caused an error");
                     }
                 }
             }
         }
-        public void OnClientCreated()
+
+        private void OnClientCreated()
         {
+            BLog.Rem();
             for (int i = 0; i < clients.Count; i++)
             {
                 try
                 {
-                    clients[i].OnCreated();
+                    clients[i]?.OnCreated();
                 }
                 catch (Exception ex)
                 {
@@ -86,11 +111,11 @@ namespace ChangeScreenshotPath.API
                     PluginManager.PluginInfo pluginInfo = Singleton<PluginManager>.instance.FindPluginInfo(type.Assembly);
                     if (pluginInfo != null)
                     {
-                        BLog.Error("The Mod " + pluginInfo.ToString() + " has caused an error", ex);
+                        BLog.Error("The Mod " + pluginInfo.ToString() + " has caused an error");
                     }
                     else
                     {
-                        BLog.Error("A Mod caused an error", ex);
+                        BLog.Error("A Mod caused an error");
                     }
                 }
             }

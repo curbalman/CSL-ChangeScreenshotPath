@@ -5,6 +5,10 @@ VisualStudioVersion = 17.1.32407.343
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChangeScreenshotPath", "ChangeScreenshotPath\ChangeScreenshotPath.csproj", "{F7BF454F-D77E-496A-B9D2-E13236031947}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BenCSCommons.Cities1", "..\..\refs\BenCSCommons.Cities1\BenCSCommons.Cities1\BenCSCommons.Cities1.shproj", "{9195B991-DD7A-4B92-87E0-26F7A7534803}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChangeScreenshotPathTestMod", "ChangeScreenshotPathTestMod\ChangeScreenshotPathTestMod.csproj", "{A10309C4-59E0-4D74-B05E-BD6DF640913F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,11 +19,20 @@ Global
 		{F7BF454F-D77E-496A-B9D2-E13236031947}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F7BF454F-D77E-496A-B9D2-E13236031947}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F7BF454F-D77E-496A-B9D2-E13236031947}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A10309C4-59E0-4D74-B05E-BD6DF640913F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A10309C4-59E0-4D74-B05E-BD6DF640913F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A10309C4-59E0-4D74-B05E-BD6DF640913F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A10309C4-59E0-4D74-B05E-BD6DF640913F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C2448E92-174D-4E06-9444-18FC39E17F2F}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		..\..\refs\BenCSCommons.Cities1\BenCSCommons.Cities1\BenCSCommons.Cities.projitems*{9195b991-dd7a-4b92-87e0-26f7a7534803}*SharedItemsImports = 13
+		..\..\refs\BenCSCommons.Cities1\BenCSCommons.Cities1\BenCSCommons.Cities.projitems*{a10309c4-59e0-4d74-b05e-bd6df640913f}*SharedItemsImports = 4
+		..\..\refs\BenCSCommons.Cities1\BenCSCommons.Cities1\BenCSCommons.Cities.projitems*{f7bf454f-d77e-496a-b9d2-e13236031947}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal

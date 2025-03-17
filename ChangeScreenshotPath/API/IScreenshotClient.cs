@@ -1,9 +1,10 @@
-﻿using ChangeScreenshotPath.Utils;
+﻿using ChangeScreenshotPath;
 using ColossalFramework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using BenCSCommons.Cities1;
 
 namespace ChangeScreenshotPath.API
 {
@@ -13,26 +14,5 @@ namespace ChangeScreenshotPath.API
         void OnAfterCaptureHiresScreenshot(ScreenshotEventArgs status);
         void OnReleased();
         void OnCreated();
-    }
-
-    public abstract class ScreenshotClientBase : IScreenshotClient
-    {
-        public IScreenshotManager manager => Singleton<ScreenshotWrapper>.instance;
-        public virtual void OnAfterCaptureScreenshot(ScreenshotEventArgs status)
-        {
-            BLog.Debug("OnAfterCaptureScreenshot called at base class");
-        }
-        public virtual void OnAfterCaptureHiresScreenshot(ScreenshotEventArgs status)
-        {
-            BLog.Debug("OnAfterHiresCaptureScreenshot called at base class");
-        }
-        public virtual void OnReleased()
-        {
-            BLog.Debug("OnReleased called at base class");
-        }
-        public virtual void OnCreated()
-        {
-            BLog.Debug("OnCreated called at base class");
-        }
     }
 }

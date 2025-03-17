@@ -19,7 +19,6 @@ namespace ChangeScreenshotPath
         {
             HarmonyHelper.DoOnHarmonyReady(() => Patcher.PatchAll());
             RenderItCompatibility.Initialize();
-            Singleton<ScreenshotWrapper>.Ensure();
         }
 
         public void OnDisabled()

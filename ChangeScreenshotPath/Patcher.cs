@@ -6,8 +6,8 @@ using ColossalFramework;
 using ColossalFramework.IO;
 using ColossalFramework.UI;
 using UnityEngine;
-using ChangeScreenshotPath.Utils;
 using ChangeScreenshotPath.API;
+using BenCSCommons.Cities1;
 
 namespace ChangeScreenshotPath
 {
@@ -136,37 +136,40 @@ namespace ChangeScreenshotPath
         private static int renderItAntialiasingTechniqueNumber;
         // API stuff
         internal static bool iSCaptureRequestedFromClient = false;
+        internal static bool isHiresRequestedFromClient = false;
 
         public static bool Prefix()
         {
             // Screenshot
             if (m_Screenshot.IsPressed(Event.current) || iSCaptureRequestedFromClient)
             {
-                BLog.Debug($"Start capturing screenshot, iSCaptureRequestedFromAPI = {iSCaptureRequestedFromClient}");
+                
+                
                 string fileName = FileName(isHires: false);
+                BLog.Info($"Start capturing screenshot {fileName}, is from API = {iSCaptureRequestedFromClient}");
                 Application.CaptureScreenshot(PathUtils.MakeUniquePath(Path.Combine(screenShotPath(), fileName)), 1);
                 iSCaptureRequestedFromClient = false;
-                Singleton<ScreenshotWrapper>.instance.OnAfterCaptureScreenshotRelay(new ScreenshotEventArgs(success:true, path:fileName));
+                Singleton<ScreenshotWrapper>.instance.OnAfterScreenshotRelay(new ScreenshotEventArgs(success:true, path:fileName));
+                return false;
             }
             // HiresScreenshot
-            else if (m_HiresScreenshot.IsPressed(Event.current))
+            else if (m_HiresScreenshot.IsPressed(Event.current) || isHiresRequestedFromClient)
             {
-                Debug.LogWarning("01");
-                
+                BLog.Info($"Start capturing hires screenshot, is from API = {isHiresRequestedFromClient}");
+                isHiresRequestedFromClient = false;
                 // Just capture if disabled the auto off AA feature.
                 if (disableAutoOffAAFeature)
                 {
                     CaptureHiresScreenshot();
-                    return false;
                 }
-                
-                // Check Render It.
-                if (RenderItCompatibility.IsRenderItExist && RenderItCompatibility.IsRenderItEnabled)
+                // Render It exists and enabled
+                else if (RenderItCompatibility.IsRenderItExist && RenderItCompatibility.IsRenderItEnabled)
                 {
                     // If anti-aliasing is on, turn it off and schedule capture in next frame.
                     if (CheckRenderItAntialiasing())
                     {
                         captureHiresInNextFrameForRenderIt = true;
+                        return false;
                     }
                     else
                     {
@@ -178,6 +181,7 @@ namespace ChangeScreenshotPath
                 else if (CheckAntialiasing())
                 {
                     captureHiresInNextFrame = true;
+                    return false;
                 }
                 else
                 {
@@ -188,10 +192,8 @@ namespace ChangeScreenshotPath
             else if (captureHiresInNextFrame)
             {
                 captureHiresInNextFrame = false;
-
                 // Capture hires screenshot while disabled anti-aliasing.
                 CaptureHiresScreenshot();
-                
                 // Restore vanilla anti-aliasing.
                 GameObject.Find("AntiAliasing").GetComponent<UIDropDown>().selectedIndex = 1;
             }
@@ -223,7 +225,12 @@ namespace ChangeScreenshotPath
                     RenderItCompatibility.RenderItUpdateAntialiasingMethod.Invoke(RenderItCompatibility.RenderItModManager, null);
                 }
             }
-            
+            else
+            {
+                return false;
+            }
+            Singleton<ScreenshotWrapper>.instance.OnAfterHiresScreenshotRelay(new ScreenshotEventArgs(success: true, path: "N/A"));
+
             return false; // Skip the original method.
         }
 
@@ -279,10 +286,15 @@ namespace ChangeScreenshotPath
         }
 
 
-        private static void CaptureHiresScreenshot() => Application.CaptureScreenshot(
+        private static string CaptureHiresScreenshot()
+        {
+            string fileName = FileName(isHires: true);
+            Application.CaptureScreenshot(
             PathUtils.MakeUniquePath(Path.Combine(
                 useDifferentPathForHiresScreenshot ? hiresScreenshotPath : ScreenshotPathPatch.screenshotPath,
-                FileName(isHires: true))), superSize);
+                fileName)), superSize);
+            return fileName;
+        }
 
         private static bool CheckAntialiasing()
         {
